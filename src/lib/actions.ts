@@ -13,6 +13,7 @@ import {
   markReimbursementPaid,
 } from "./db";
 import { prisma } from "./prisma";
+import { TransactionType } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
 // Set / override balance — password protected, logs an adjustment transaction
@@ -29,17 +30,21 @@ export async function setBalanceAction(formData: FormData) {
   const account = await getAccount();
   const delta = amount - account.balance;
 
+  // Set the balance absolutely, then log the adjustment as an audit record.
+  // We use prisma.transaction.create directly (not addTransaction) to avoid
+  // addTransaction's balance-increment side effect causing a double adjustment.
   await setBalance(amount);
 
-  // Log the adjustment as a transaction
   if (delta !== 0) {
-    await addTransaction({
-      type: delta > 0 ? "INCOME" : "EXPENSE",
-      amount: Math.abs(delta),
-      date: new Date(),
-      category: "Balance Adjustment",
-      description: `Manual balance override: ${account.balance.toFixed(2)} → ${amount.toFixed(2)}`,
-      loggedBy,
+    await prisma.transaction.create({
+      data: {
+        type: (delta > 0 ? "INCOME" : "EXPENSE") as TransactionType,
+        amount: Math.abs(delta),
+        date: new Date(),
+        category: "Balance Adjustment",
+        description: `Manual balance override: $${account.balance.toFixed(2)} → $${amount.toFixed(2)}`,
+        loggedBy,
+      },
     });
   }
 
