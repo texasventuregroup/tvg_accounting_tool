@@ -33,6 +33,7 @@ model Transaction {
   category    String
   description String
   loggedBy    String
+  notes       String?
   createdAt   DateTime        @default(now())
 }
 
@@ -53,6 +54,7 @@ model Reimbursement {
   amount          Float
   date            DateTime
   receiptImageUrl String?
+  notes           String?
   status          ReimbursementStatus @default(PENDING)
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt

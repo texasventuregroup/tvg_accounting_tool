@@ -62,6 +62,8 @@ const TransactionSchema = z.object({
   category: z.string().min(1),
   description: z.string().min(1),
   loggedBy: z.string().min(1),
+  notes: z.string().optional(),
+  password: z.string().min(1),
 });
 
 export async function addTransactionAction(formData: FormData) {
@@ -69,7 +71,10 @@ export async function addTransactionAction(formData: FormData) {
   const parsed = TransactionSchema.safeParse(raw);
   if (!parsed.success) throw new Error("Invalid transaction data");
 
-  const { type, amount, date, category, description, loggedBy } = parsed.data;
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "tvg2025";
+  if (parsed.data.password !== adminPassword) throw new Error("Invalid password");
+
+  const { type, amount, date, category, description, loggedBy, notes } = parsed.data;
   await addTransaction({
     type,
     amount,
@@ -77,7 +82,37 @@ export async function addTransactionAction(formData: FormData) {
     category,
     description,
     loggedBy,
+    notes: notes || undefined,
   });
+  revalidatePath("/");
+  revalidatePath("/transactions");
+}
+
+// ---------------------------------------------------------------------------
+// Delete a single transaction — reverses its effect on balance
+// ---------------------------------------------------------------------------
+export async function deleteTransactionAction(formData: FormData) {
+  const password = formData.get("password") as string;
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "tvg2025";
+  if (password !== adminPassword) throw new Error("Invalid password");
+
+  const id = parseInt(formData.get("id") as string);
+  if (isNaN(id)) throw new Error("Invalid id");
+
+  const tx = await prisma.transaction.findUnique({ where: { id } });
+  if (!tx) throw new Error("Transaction not found");
+
+  // Reverse the balance effect
+  const reversal = tx.type === "INCOME" ? -tx.amount : tx.amount;
+  await prisma.$transaction([
+    prisma.transaction.delete({ where: { id } }),
+    prisma.clubAccount.upsert({
+      where: { id: 1 },
+      update: { balance: { increment: reversal } },
+      create: { id: 1, balance: reversal },
+    }),
+  ]);
+
   revalidatePath("/");
   revalidatePath("/transactions");
 }
@@ -157,6 +192,7 @@ const ReimbursementSchema = z.object({
   amount: z.coerce.number().positive(),
   date: z.string(),
   receiptImageUrl: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 export async function submitReimbursementAction(formData: FormData) {
@@ -164,13 +200,14 @@ export async function submitReimbursementAction(formData: FormData) {
   const parsed = ReimbursementSchema.safeParse(raw);
   if (!parsed.success) throw new Error("Invalid reimbursement data");
 
-  const { memberName, vendorName, amount, date, receiptImageUrl } = parsed.data;
+  const { memberName, vendorName, amount, date, receiptImageUrl, notes } = parsed.data;
   await createReimbursement({
     memberName,
     vendorName,
     amount,
     date: new Date(date),
     receiptImageUrl,
+    notes: notes || undefined,
   });
   revalidatePath("/");
   revalidatePath("/reimbursements");

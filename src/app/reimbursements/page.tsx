@@ -44,6 +44,7 @@ export default async function ReimbursementsPage() {
                     <th className="pb-3 pr-4 font-medium">Vendor</th>
                     <th className="pb-3 pr-4 font-medium">Amount</th>
                     <th className="pb-3 pr-4 font-medium">Date</th>
+                    <th className="pb-3 pr-4 font-medium">Notes</th>
                     <th className="pb-3 pr-4 font-medium">Receipt</th>
                     <th className="pb-3 font-medium">Action</th>
                   </tr>
@@ -58,6 +59,13 @@ export default async function ReimbursementsPage() {
                       </td>
                       <td className="py-3 pr-4 text-muted-foreground whitespace-nowrap">
                         {formatDate(r.date)}
+                      </td>
+                      <td className="py-3 pr-4 text-muted-foreground max-w-[160px]">
+                        {r.notes ? (
+                          <span className="italic text-xs">{r.notes}</span>
+                        ) : (
+                          <span className="text-xs">—</span>
+                        )}
                       </td>
                       <td className="py-3 pr-4">
                         {r.receiptImageUrl ? (

@@ -46,8 +46,13 @@ export function AddTransactionForm() {
       (e.target as HTMLFormElement).reset();
       setType("EXPENSE");
       router.refresh();
-    } catch {
-      toast({ variant: "destructive", title: "Error", description: "Failed to log transaction." });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to log transaction.";
+      toast({
+        variant: "destructive",
+        title: msg === "Invalid password" ? "Wrong password" : "Error",
+        description: msg === "Invalid password" ? "The admin password is incorrect." : msg,
+      });
     } finally {
       setPending(false);
     }
@@ -126,7 +131,25 @@ export function AddTransactionForm() {
             <Input id="loggedBy" name="loggedBy" placeholder="Your name" required />
           </div>
 
-          <div className="sm:col-span-2 lg:col-span-3">
+          {/* Notes — full width */}
+          <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+            <Label htmlFor="notes">Notes (optional)</Label>
+            <textarea
+              id="notes"
+              name="notes"
+              placeholder="Any additional context or details…"
+              rows={2}
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+            />
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1">
+            <Label htmlFor="password">Admin Password</Label>
+            <Input id="password" name="password" type="password" placeholder="Required to submit" required />
+          </div>
+
+          <div className="sm:col-span-2 lg:col-span-2 flex items-end">
             <Button type="submit" disabled={pending} className="w-full sm:w-auto">
               {pending ? "Saving…" : "Log Transaction"}
             </Button>

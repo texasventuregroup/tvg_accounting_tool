@@ -3,6 +3,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AddTransactionForm } from "@/components/add-transaction-form";
+import { DeleteTransactionButton } from "@/components/delete-transaction-button";
 
 export const dynamic = "force-dynamic";
 
@@ -37,8 +38,10 @@ export default async function TransactionsPage() {
                     <th className="pb-3 pr-4 font-medium">Amount</th>
                     <th className="pb-3 pr-4 font-medium">Category</th>
                     <th className="pb-3 pr-4 font-medium">Description</th>
+                    <th className="pb-3 pr-4 font-medium">Notes</th>
                     <th className="pb-3 pr-4 font-medium">Date</th>
-                    <th className="pb-3 font-medium">Logged By</th>
+                    <th className="pb-3 pr-4 font-medium">Logged By</th>
+                    <th className="pb-3 font-medium"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -59,10 +62,20 @@ export default async function TransactionsPage() {
                       </td>
                       <td className="py-3 pr-4 text-muted-foreground">{tx.category}</td>
                       <td className="py-3 pr-4">{tx.description}</td>
+                      <td className="py-3 pr-4 text-muted-foreground max-w-[180px]">
+                        {tx.notes ? (
+                          <span className="italic text-xs">{tx.notes}</span>
+                        ) : (
+                          <span className="text-xs">—</span>
+                        )}
+                      </td>
                       <td className="py-3 pr-4 text-muted-foreground whitespace-nowrap">
                         {formatDate(tx.date)}
                       </td>
-                      <td className="py-3 text-muted-foreground">{tx.loggedBy}</td>
+                      <td className="py-3 pr-4 text-muted-foreground">{tx.loggedBy}</td>
+                      <td className="py-3">
+                        <DeleteTransactionButton id={tx.id} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

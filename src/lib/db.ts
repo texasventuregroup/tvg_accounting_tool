@@ -46,6 +46,7 @@ export async function addTransaction(data: {
   category: string;
   description: string;
   loggedBy: string;
+  notes?: string;
 }) {
   const delta = data.type === "INCOME" ? data.amount : -data.amount;
   const [transaction] = await prisma.$transaction([
@@ -73,6 +74,7 @@ export async function createReimbursement(data: {
   amount: number;
   date: Date;
   receiptImageUrl?: string;
+  notes?: string;
 }) {
   // Deduct from balance immediately when the request is submitted
   const [reimbursement] = await prisma.$transaction([
