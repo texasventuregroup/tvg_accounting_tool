@@ -15,7 +15,7 @@ export function NavBar() {
         <div className="flex h-14 items-center gap-6">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="tvg-logo-box flex h-7 w-7 items-center justify-center rounded text-xs font-bold">
-              TG
+              TVG
             </div>
             <span className="text-sm font-semibold tracking-wide tvg-nav-brand">
               Texas Venture Group
