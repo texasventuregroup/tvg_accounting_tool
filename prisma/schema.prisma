@@ -1,0 +1,65 @@
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// ClubAccount
+// Singleton row (id = 1) that holds the live club balance.
+// ---------------------------------------------------------------------------
+model ClubAccount {
+  id        Int      @id @default(autoincrement())
+  balance   Float    @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Transaction
+// Every manual income / expense entry.  Positive amounts = income,
+// negative amounts = expense (enforced at the application layer).
+// ---------------------------------------------------------------------------
+model Transaction {
+  id          Int             @id @default(autoincrement())
+  type        TransactionType
+  amount      Float           // always positive — type determines direction
+  date        DateTime
+  category    String
+  description String
+  loggedBy    String
+  createdAt   DateTime        @default(now())
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+// ---------------------------------------------------------------------------
+// Reimbursement
+// Created when a member uploads a receipt and submits the payout request.
+// Deducted from the balance immediately; admin marks PAID when money goes out.
+// ---------------------------------------------------------------------------
+model Reimbursement {
+  id              Int                 @id @default(autoincrement())
+  memberName      String
+  vendorName      String
+  amount          Float
+  date            DateTime
+  receiptImageUrl String?
+  status          ReimbursementStatus @default(PENDING)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+enum ReimbursementStatus {
+  PENDING
+  PAID
+}
