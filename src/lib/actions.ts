@@ -7,19 +7,44 @@ import { google } from "@ai-sdk/google";
 import { put } from "@vercel/blob";
 import {
   addTransaction,
+  getAccount,
   setBalance,
   createReimbursement,
   markReimbursementPaid,
 } from "./db";
+import { prisma } from "./prisma";
 
 // ---------------------------------------------------------------------------
-// Set initial / override balance
+// Set / override balance — password protected, logs an adjustment transaction
 // ---------------------------------------------------------------------------
 export async function setBalanceAction(formData: FormData) {
+  const password = formData.get("password") as string;
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "tvg2025";
+  if (password !== adminPassword) throw new Error("Invalid password");
+
   const amount = parseFloat(formData.get("balance") as string);
+  const loggedBy = (formData.get("loggedBy") as string) || "Admin";
   if (isNaN(amount)) throw new Error("Invalid amount");
+
+  const account = await getAccount();
+  const delta = amount - account.balance;
+
   await setBalance(amount);
+
+  // Log the adjustment as a transaction
+  if (delta !== 0) {
+    await addTransaction({
+      type: delta > 0 ? "INCOME" : "EXPENSE",
+      amount: Math.abs(delta),
+      date: new Date(),
+      category: "Balance Adjustment",
+      description: `Manual balance override: ${account.balance.toFixed(2)} → ${amount.toFixed(2)}`,
+      loggedBy,
+    });
+  }
+
   revalidatePath("/");
+  revalidatePath("/transactions");
 }
 
 // ---------------------------------------------------------------------------
@@ -61,6 +86,15 @@ const ReceiptSchema = z.object({
   date: z.string().describe("The date on the receipt in YYYY-MM-DD format"),
 });
 
+type SupportedMime = "image/jpeg" | "image/png" | "image/webp" | "image/heic" | "image/heif";
+
+function normalizeMime(type: string): SupportedMime {
+  if (type === "image/heic" || type === "image/heif") return "image/heic";
+  if (type === "image/png") return "image/png";
+  if (type === "image/webp") return "image/webp";
+  return "image/jpeg";
+}
+
 export async function scanReceiptAction(formData: FormData): Promise<{
   vendorName: string;
   totalAmount: number;
@@ -73,14 +107,13 @@ export async function scanReceiptAction(formData: FormData): Promise<{
   // Upload to Vercel Blob
   const blob = await put(`receipts/${Date.now()}-${file.name}`, file, {
     access: "public",
-    contentType: file.type,
+    contentType: file.type || "image/jpeg",
   });
 
   // Convert file to base64 for Gemini
   const arrayBuffer = await file.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString("base64");
 
-  // Use Gemini to extract structured data
   const { object } = await generateObject({
     model: google("gemini-2.5-flash"),
     schema: ReceiptSchema,
@@ -91,7 +124,7 @@ export async function scanReceiptAction(formData: FormData): Promise<{
           {
             type: "image",
             image: base64,
-            mimeType: file.type as "image/jpeg" | "image/png" | "image/webp",
+            mimeType: normalizeMime(file.type),
           },
           {
             type: "text",
@@ -146,4 +179,16 @@ export async function markPaidAction(id: number) {
   await markReimbursementPaid(id);
   revalidatePath("/reimbursements");
   revalidatePath("/");
+}
+
+// ---------------------------------------------------------------------------
+// Clear paid history — password protected
+// ---------------------------------------------------------------------------
+export async function clearPaidHistoryAction(formData: FormData) {
+  const password = formData.get("password") as string;
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "tvg2025";
+  if (password !== adminPassword) throw new Error("Invalid password");
+
+  await prisma.reimbursement.deleteMany({ where: { status: "PAID" } });
+  revalidatePath("/reimbursements");
 }

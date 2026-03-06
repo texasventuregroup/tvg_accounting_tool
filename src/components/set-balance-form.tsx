@@ -20,11 +20,17 @@ export function SetBalanceForm({ currentBalance }: { currentBalance: number }) {
     setPending(true);
     try {
       await setBalanceAction(new FormData(e.currentTarget));
-      toast({ title: "Balance updated", description: "Club balance has been set." });
+      toast({ title: "Balance updated", description: "Adjustment logged as a transaction." });
       setOpen(false);
       router.refresh();
-    } catch {
-      toast({ variant: "destructive", title: "Error", description: "Failed to update balance." });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to update balance.";
+      const isAuth = msg === "Invalid password";
+      toast({
+        variant: "destructive",
+        title: isAuth ? "Wrong password" : "Error",
+        description: isAuth ? "The admin password is incorrect." : msg,
+      });
     } finally {
       setPending(false);
     }
@@ -37,10 +43,10 @@ export function SetBalanceForm({ currentBalance }: { currentBalance: number }) {
         Set Balance
       </Button>
       {open && (
-        <div className="absolute right-0 top-10 z-10 w-72 rounded-lg border bg-card shadow-lg p-4 space-y-3">
+        <div className="absolute right-0 top-10 z-10 w-80 rounded-lg border bg-card shadow-lg p-4 space-y-3">
           <p className="text-sm font-medium">Override Club Balance</p>
           <p className="text-xs text-muted-foreground">
-            Use this to set an initial balance or make a manual correction.
+            Requires admin password. The adjustment will be logged as a transaction.
           </p>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-1">
@@ -54,16 +60,25 @@ export function SetBalanceForm({ currentBalance }: { currentBalance: number }) {
                 required
               />
             </div>
+            <div className="space-y-1">
+              <Label htmlFor="loggedBy">Your Name</Label>
+              <Input id="loggedBy" name="loggedBy" placeholder="Who is making this change?" required />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="password">Admin Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Enter admin password"
+                required
+              />
+            </div>
             <div className="flex gap-2">
               <Button type="submit" size="sm" disabled={pending} className="flex-1">
                 {pending ? "Saving…" : "Save"}
               </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => setOpen(false)}
-              >
+              <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
             </div>

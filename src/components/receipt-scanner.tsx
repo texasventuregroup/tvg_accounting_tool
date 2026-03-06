@@ -121,7 +121,7 @@ export function ReceiptScanner() {
       <Card>
         <CardHeader>
           <CardTitle>1. Upload Receipt</CardTitle>
-          <CardDescription>Supported: JPEG, PNG, WebP</CardDescription>
+          <CardDescription>Supported: JPEG, PNG, WebP, HEIC</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div
@@ -148,7 +148,7 @@ export function ReceiptScanner() {
           <input
             ref={fileRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
             className="hidden"
             onChange={handleFileChange}
           />

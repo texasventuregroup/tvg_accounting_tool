@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Landmark } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 const links = [
@@ -11,21 +10,21 @@ const links = [
 
 export function NavBar() {
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-      <div className="container mx-auto max-w-7xl px-4">
+    <header className="sticky top-0 z-50 tvg-nav">
+      <div className="container mx-auto max-w-7xl px-6">
         <div className="flex h-14 items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <Landmark className="h-5 w-5 text-primary" />
-            <span>TVG Accounting</span>
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="tvg-logo-box flex h-7 w-7 items-center justify-center rounded text-xs font-bold">
+              TG
+            </div>
+            <span className="text-sm font-semibold tracking-wide tvg-nav-brand">
+              Texas Venture Group
+            </span>
           </Link>
-          <Separator orientation="vertical" className="h-5" />
-          <nav className="flex items-center gap-5 text-sm">
+          <Separator orientation="vertical" className="h-4 tvg-nav-sep" />
+          <nav className="flex items-center gap-6 text-sm">
             {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link key={l.href} href={l.href} className="tvg-nav-link">
                 {l.label}
               </Link>
             ))}

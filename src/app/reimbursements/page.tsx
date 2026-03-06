@@ -3,6 +3,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MarkPaidButton } from "@/components/mark-paid-button";
+import { ClearPaidHistoryButton } from "@/components/clear-paid-history-button";
 
 export const dynamic = "force-dynamic";
 
@@ -87,9 +88,12 @@ export default async function ReimbursementsPage() {
       {/* Paid history */}
       {paid.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Paid History</CardTitle>
-            <CardDescription>{paid.length} completed reimbursements</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+              <CardTitle>Paid History</CardTitle>
+              <CardDescription>{paid.length} completed reimbursements</CardDescription>
+            </div>
+            <ClearPaidHistoryButton />
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
